@@ -1,4 +1,4 @@
-package com.internance.auth.config;
+package com.internance.auth.infrastructure.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
