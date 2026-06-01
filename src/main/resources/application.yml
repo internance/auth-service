@@ -7,3 +7,9 @@ spring:
     config:
       fail-fast: true
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
+
