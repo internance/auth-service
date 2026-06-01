@@ -11,8 +11,11 @@ COPY settings.gradle build.gradle ./
 RUN chmod +x gradlew && ./gradlew dependencies --no-daemon
 
 # Build the executable jar (tests run in CI, not in the image build).
+# Rename to a fixed filename so the runtime COPY stays deterministic even if
+# build/libs ever contains more than one jar.
 COPY src ./src
-RUN ./gradlew bootJar --no-daemon -x test
+RUN ./gradlew bootJar --no-daemon -x test \
+	&& mv build/libs/*.jar app.jar
 
 # --- Runtime stage ---
 FROM eclipse-temurin:21-jre-alpine
@@ -22,7 +25,7 @@ WORKDIR /app
 RUN addgroup -S app && adduser -S app -G app
 USER app
 
-COPY --from=build /workspace/build/libs/*.jar app.jar
+COPY --from=build /workspace/app.jar app.jar
 
 EXPOSE 8100
 ENTRYPOINT ["java", "-jar", "app.jar"]
