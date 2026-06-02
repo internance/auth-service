@@ -107,4 +107,16 @@ class UserControllerIntegrationTest {
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.error.code").value("G400_1"));
     }
+
+    @Test
+    void signUp_withTooLongPassword_returns400() throws Exception {
+        SignUpRequest request = new SignUpRequest("dave", "a".repeat(21));
+
+        mockMvc.perform(post(SIGN_UP_URL)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.error.code").value("G400_1"));
+    }
 }

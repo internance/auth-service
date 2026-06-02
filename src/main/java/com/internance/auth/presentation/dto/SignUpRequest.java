@@ -14,6 +14,6 @@ public record SignUpRequest(
         String username,
 
         @NotBlank
-        @Size(min = 8, max = 100)
+        @Size(min = 8, max = 20)
         String password) {
 }
