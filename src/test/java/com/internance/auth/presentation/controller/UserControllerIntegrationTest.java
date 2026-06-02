@@ -72,9 +72,9 @@ class UserControllerIntegrationTest {
     void signUp_withDuplicateUsername_returns409() throws Exception {
         // Shares the test transaction with the request below; existsByUsername
         // auto-flushes the pending INSERT, so the duplicate is detected.
-        userRepository.save(User.create("bob", passwordEncoder.encode("password123"), "USER"));
+        userRepository.save(User.create("bobby", passwordEncoder.encode("password123"), "USER"));
 
-        SignUpRequest request = new SignUpRequest("bob", "password456");
+        SignUpRequest request = new SignUpRequest("bobby", "password456");
 
         mockMvc.perform(post(SIGN_UP_URL)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -87,6 +87,18 @@ class UserControllerIntegrationTest {
     @Test
     void signUp_withTooShortPassword_returns400() throws Exception {
         SignUpRequest request = new SignUpRequest("carol", "short");
+
+        mockMvc.perform(post(SIGN_UP_URL)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.error.code").value("G400_1"));
+    }
+
+    @Test
+    void signUp_withTooShortUsername_returns400() throws Exception {
+        SignUpRequest request = new SignUpRequest("ab", "password123");
 
         mockMvc.perform(post(SIGN_UP_URL)
                         .contentType(MediaType.APPLICATION_JSON)
