@@ -2,6 +2,11 @@ spring:
   cloud:
     config:
       enabled: false
+  jpa:
+    hibernate:
+      # Flyway owns the schema; Hibernate only validates that the entities
+      # match the migrated tables.
+      ddl-auto: validate
 
 eureka:
   client:
