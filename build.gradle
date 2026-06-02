@@ -15,7 +15,15 @@ java {
 
 repositories {
 	mavenCentral()
-	maven { url 'https://jitpack.io' }
+	maven {
+		url 'https://jitpack.io'
+		// Only resolve the groups we actually consume from JitPack, so it can't
+		// shadow Central or widen the supply-chain surface for other coordinates.
+		content {
+			includeGroup 'com.github.internance'
+			includeGroup 'com.github.f4b6a3'
+		}
+	}
 }
 
 ext {
