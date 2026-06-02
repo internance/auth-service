@@ -70,11 +70,29 @@ class UserControllerIntegrationTest {
 
     @Test
     void signUp_withDuplicateUsername_returns409() throws Exception {
-        // Shares the test transaction with the request below; existsByUsername
-        // auto-flushes the pending INSERT, so the duplicate is detected.
-        userRepository.save(User.create("bobby", passwordEncoder.encode("password123"), "USER"));
+        // saveAndFlush so the row is in the DB before the native existence
+        // check runs in the same transaction.
+        userRepository.saveAndFlush(User.create("bobby", passwordEncoder.encode("password123"), "USER"));
 
         SignUpRequest request = new SignUpRequest("bobby", "password456");
+
+        mockMvc.perform(post(SIGN_UP_URL)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.error.code").value("A409"));
+    }
+
+    @Test
+    void signUp_withSoftDeletedUsername_returns409() throws Exception {
+        // A soft-deleted username must not be reusable (full UNIQUE constraint).
+        User user = userRepository.saveAndFlush(
+                User.create("erin", passwordEncoder.encode("password123"), "USER"));
+        userRepository.delete(user); // @SQLDelete -> sets deleted_at
+        userRepository.flush();
+
+        SignUpRequest request = new SignUpRequest("erin", "password456");
 
         mockMvc.perform(post(SIGN_UP_URL)
                         .contentType(MediaType.APPLICATION_JSON)

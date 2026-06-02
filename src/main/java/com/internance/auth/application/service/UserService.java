@@ -2,6 +2,7 @@ package com.internance.auth.application.service;
 
 import java.util.UUID;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,18 +26,24 @@ public class UserService {
 
     /**
      * Registers a new user. The raw password is encoded before storage; the
-     * username must be unique among active (non-soft-deleted) users.
+     * username must be unique across all rows, including soft-deleted ones.
      *
      * @return the id of the newly created user
      * @throws BusinessException with {@link AuthErrorCode#DUPLICATE_USERNAME} if the username is taken
      */
     @Transactional
     public UUID signUp(String username, String rawPassword) {
-        if (userRepository.existsByUsername(username)) {
+        if (userRepository.existsByUsernameIncludingDeleted(username)) {
             throw new BusinessException(AuthErrorCode.DUPLICATE_USERNAME);
         }
 
         User user = User.create(username, passwordEncoder.encode(rawPassword), DEFAULT_ROLE);
-        return userRepository.save(user).getId();
+        try {
+            // saveAndFlush so a concurrent insert that slipped past the check
+            // above surfaces the unique-constraint violation here, not at commit.
+            return userRepository.saveAndFlush(user).getId();
+        } catch (DataIntegrityViolationException e) {
+            throw new BusinessException(AuthErrorCode.DUPLICATE_USERNAME, e);
+        }
     }
 }
