@@ -1,0 +1,29 @@
+name: Backend CI Pipeline
+
+on:
+  pull_request:
+    branches: [ "dev", "main" ]
+
+jobs:
+  build-and-verify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out source code
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21 and Gradle cache
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'gradle'
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Check code formatting (Spotless)
+        run: ./gradlew spotlessCheck
+
+      - name: Run tests and build
+        run: ./gradlew build
