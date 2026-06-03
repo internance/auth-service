@@ -1,5 +1,6 @@
 package com.internance.auth.infrastructure.persistence;
 
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -22,4 +23,7 @@ public interface UserRepository extends JpaRepository<User, UUID> {
      */
     @Query(value = "SELECT EXISTS(SELECT 1 FROM users WHERE username = :username)", nativeQuery = true)
     boolean existsByUsernameIncludingDeleted(@Param("username") String username);
+
+    /** Active (non-soft-deleted) user by username, for login. */
+    Optional<User> findByUsername(String username);
 }

@@ -16,7 +16,9 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum AuthErrorCode implements ErrorCode {
 
-    DUPLICATE_USERNAME("A409", "Username already exists", HttpStatus.CONFLICT);
+    DUPLICATE_USERNAME("A409", "Username already exists", HttpStatus.CONFLICT),
+    INVALID_CREDENTIALS("A401", "Invalid username or password", HttpStatus.UNAUTHORIZED),
+    INVALID_TOKEN("A401_1", "Invalid or expired token", HttpStatus.UNAUTHORIZED);
 
     private final String code;
     private final String message;

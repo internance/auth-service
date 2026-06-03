@@ -13,3 +13,7 @@ eureka:
     enabled: false
     register-with-eureka: false
     fetch-registry: false
+
+jwt:
+  # Test-only HS256 secret (>= 32 bytes); never used outside tests.
+  secret: test-secret-test-secret-test-secret-0123456789

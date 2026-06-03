@@ -31,7 +31,7 @@ import com.internance.auth.presentation.dto.SignUpRequest;
 @Transactional
 class UserControllerIntegrationTest {
 
-    private static final String SIGN_UP_URL = "/api/v1/auth/signup";
+    private static final String SIGN_UP_URL = "/api/v1/users/signup";
 
     @Autowired
     private MockMvc mockMvc;
