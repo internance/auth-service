@@ -24,14 +24,15 @@ public class SecurityConfig {
 	SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 		// Stateless token-based API: no server-side session, no CSRF tokens.
 		// Actuator endpoints (health, prometheus) are scraped by the monitoring
-		// stack and the public auth endpoints (sign-up, login, refresh) must be
-		// reachable unauthenticated; everything else still requires authentication
-		// until the JWT filter is wired in.
+		// stack, and sign-up (POST /users/signup) plus login/refresh must be reachable
+		// unauthenticated; everything else still requires authentication until
+		// the JWT filter is wired in.
 		http
 				.csrf(csrf -> csrf.disable())
 				.authorizeHttpRequests(auth -> auth
 						.requestMatchers("/actuator/health", "/actuator/health/**", "/actuator/prometheus").permitAll()
-						.requestMatchers(HttpMethod.POST, "/api/v1/auth/signup", "/api/v1/auth/login", "/api/v1/auth/refresh").permitAll()
+						.requestMatchers(HttpMethod.POST, "/api/v1/users/signup").permitAll()
+						.requestMatchers(HttpMethod.POST, "/api/v1/auth/login", "/api/v1/auth/refresh").permitAll()
 						.anyRequest().authenticated());
 		return http.build();
 	}
