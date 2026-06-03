@@ -1,11 +1,9 @@
 package com.internance.auth.domain.exception;
 
-import org.springframework.http.HttpStatus;
-
 import com.internance.common.exception.ErrorCode;
-
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 
 /**
  * Auth-service-specific error codes. Codes are prefixed with {@code A} to
@@ -15,7 +13,6 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor
 public enum AuthErrorCode implements ErrorCode {
-
     DUPLICATE_USERNAME("A409", "Username already exists", HttpStatus.CONFLICT),
     INVALID_CREDENTIALS("A401", "Invalid username or password", HttpStatus.UNAUTHORIZED),
     INVALID_TOKEN("A401_1", "Invalid or expired token", HttpStatus.UNAUTHORIZED);

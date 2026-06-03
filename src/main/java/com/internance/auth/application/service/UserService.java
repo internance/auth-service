@@ -1,18 +1,15 @@
 package com.internance.auth.application.service;
 
-import java.util.UUID;
-
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import com.internance.auth.domain.exception.AuthErrorCode;
 import com.internance.auth.domain.model.User;
 import com.internance.auth.infrastructure.persistence.UserRepository;
 import com.internance.common.exception.BusinessException;
-
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor

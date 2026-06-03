@@ -1,19 +1,17 @@
 package com.internance.auth.presentation.controller;
 
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
 import com.internance.auth.application.service.AuthService;
 import com.internance.auth.application.service.TokenResult;
 import com.internance.auth.presentation.dto.LoginRequest;
 import com.internance.auth.presentation.dto.RefreshRequest;
 import com.internance.auth.presentation.dto.TokenResponse;
 import com.internance.common.api.ApiResponse;
-
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/auth")

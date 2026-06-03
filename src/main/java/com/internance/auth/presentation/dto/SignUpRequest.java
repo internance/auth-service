@@ -8,12 +8,4 @@ import jakarta.validation.constraints.Size;
  * assigns the default role so clients cannot self-escalate privileges.
  */
 public record SignUpRequest(
-
-        @NotBlank
-        @Size(min = 4, max = 20)
-        String username,
-
-        @NotBlank
-        @Size(min = 8, max = 20)
-        String password) {
-}
+        @NotBlank @Size(min = 4, max = 20) String username, @NotBlank @Size(min = 8, max = 20) String password) {}

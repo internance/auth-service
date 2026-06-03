@@ -4,6 +4,12 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.internance.auth.TestcontainersConfiguration;
+import com.internance.auth.domain.model.User;
+import com.internance.auth.infrastructure.persistence.UserRepository;
+import com.internance.auth.presentation.dto.LoginRequest;
+import com.internance.auth.presentation.dto.RefreshRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,13 +20,6 @@ import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.internance.auth.TestcontainersConfiguration;
-import com.internance.auth.domain.model.User;
-import com.internance.auth.infrastructure.persistence.UserRepository;
-import com.internance.auth.presentation.dto.LoginRequest;
-import com.internance.auth.presentation.dto.RefreshRequest;
 
 @Import(TestcontainersConfiguration.class)
 @SpringBootTest
@@ -84,8 +83,11 @@ class AuthControllerIntegrationTest {
         String loginBody = mockMvc.perform(post(LOGIN_URL)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new LoginRequest("frank", "password123"))))
-                .andReturn().getResponse().getContentAsString();
-        String refreshToken = objectMapper.readTree(loginBody).at("/data/refreshToken").asText();
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        String refreshToken =
+                objectMapper.readTree(loginBody).at("/data/refreshToken").asText();
 
         mockMvc.perform(post(REFRESH_URL)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -110,8 +112,11 @@ class AuthControllerIntegrationTest {
         String loginBody = mockMvc.perform(post(LOGIN_URL)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new LoginRequest("frank", "password123"))))
-                .andReturn().getResponse().getContentAsString();
-        String accessToken = objectMapper.readTree(loginBody).at("/data/accessToken").asText();
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        String accessToken =
+                objectMapper.readTree(loginBody).at("/data/accessToken").asText();
 
         mockMvc.perform(post(REFRESH_URL)
                         .contentType(MediaType.APPLICATION_JSON)

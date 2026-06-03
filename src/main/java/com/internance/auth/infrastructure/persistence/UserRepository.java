@@ -1,13 +1,11 @@
 package com.internance.auth.infrastructure.persistence;
 
+import com.internance.auth.domain.model.User;
 import java.util.Optional;
 import java.util.UUID;
-
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-
-import com.internance.auth.domain.model.User;
 
 /**
  * Persistence access for {@link User}. Note the entity's {@code @SQLRestriction}
