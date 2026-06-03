@@ -6,8 +6,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.internance.auth.TestcontainersConfiguration;
+import com.internance.auth.domain.model.User;
+import com.internance.auth.infrastructure.persistence.UserRepository;
+import com.internance.auth.presentation.dto.SignUpRequest;
 import java.util.UUID;
-
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,12 +22,6 @@ import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.internance.auth.TestcontainersConfiguration;
-import com.internance.auth.domain.model.User;
-import com.internance.auth.infrastructure.persistence.UserRepository;
-import com.internance.auth.presentation.dto.SignUpRequest;
 
 @Import(TestcontainersConfiguration.class)
 @SpringBootTest
@@ -60,7 +58,8 @@ class UserControllerIntegrationTest {
                 .getResponse()
                 .getContentAsString();
 
-        UUID userId = UUID.fromString(objectMapper.readTree(response).at("/data/userId").asText());
+        UUID userId = UUID.fromString(
+                objectMapper.readTree(response).at("/data/userId").asText());
         User saved = userRepository.findById(userId).orElseThrow();
         assertThat(saved.getUsername()).isEqualTo("alice");
         assertThat(saved.getRole()).isEqualTo("USER");
@@ -87,8 +86,7 @@ class UserControllerIntegrationTest {
     @Test
     void signUp_withSoftDeletedUsername_returns409() throws Exception {
         // A soft-deleted username must not be reusable (full UNIQUE constraint).
-        User user = userRepository.saveAndFlush(
-                User.create("erin", passwordEncoder.encode("password123"), "USER"));
+        User user = userRepository.saveAndFlush(User.create("erin", passwordEncoder.encode("password123"), "USER"));
         userRepository.delete(user); // @SQLDelete -> sets deleted_at
         userRepository.flush();
 

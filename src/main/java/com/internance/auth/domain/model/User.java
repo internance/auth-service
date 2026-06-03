@@ -1,16 +1,14 @@
 package com.internance.auth.domain.model;
 
+import com.internance.common.entity.BaseSoftDeleteEntity;
+import com.internance.common.utils.IdGenerator;
 import jakarta.persistence.*;
+import java.util.UUID;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
-
-import java.util.UUID;
-
-import com.internance.common.entity.BaseSoftDeleteEntity;
-import com.internance.common.utils.IdGenerator;
 
 @Entity
 @Table(name = "users")
@@ -52,4 +50,3 @@ public class User extends BaseSoftDeleteEntity {
         this.password = encodedPassword;
     }
 }
-    

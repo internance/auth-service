@@ -1,20 +1,17 @@
 package com.internance.auth.infrastructure.security;
 
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
 import java.util.Map;
 import java.util.UUID;
-
 import javax.crypto.SecretKey;
-
 import org.springframework.stereotype.Component;
-
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.JwtException;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.Keys;
 
 /**
  * Issues and verifies HS256 JWTs. Access tokens carry the user's role for
@@ -61,8 +58,8 @@ public class JwtTokenProvider {
      *                      is not a refresh token
      */
     public UUID parseRefreshSubject(String token) {
-        Claims claims = Jwts.parser().verifyWith(key).build()
-                .parseSignedClaims(token).getPayload();
+        Claims claims =
+                Jwts.parser().verifyWith(key).build().parseSignedClaims(token).getPayload();
         if (!REFRESH.equals(claims.get(TYPE_CLAIM, String.class))) {
             throw new JwtException("Not a refresh token");
         }

@@ -1,18 +1,15 @@
 package com.internance.auth.application.service;
 
-import java.util.UUID;
-
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import com.internance.auth.domain.exception.AuthErrorCode;
 import com.internance.auth.domain.model.User;
 import com.internance.auth.infrastructure.persistence.UserRepository;
 import com.internance.auth.infrastructure.security.JwtTokenProvider;
 import com.internance.common.exception.BusinessException;
-
 import io.jsonwebtoken.JwtException;
+import java.util.UUID;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class AuthService {
@@ -28,8 +25,8 @@ public class AuthService {
      */
     private final String dummyPasswordHash;
 
-    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder,
-                       JwtTokenProvider jwtTokenProvider) {
+    public AuthService(
+            UserRepository userRepository, PasswordEncoder passwordEncoder, JwtTokenProvider jwtTokenProvider) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtTokenProvider = jwtTokenProvider;
@@ -69,7 +66,8 @@ public class AuthService {
         } catch (JwtException | IllegalArgumentException e) {
             throw new BusinessException(AuthErrorCode.INVALID_TOKEN, e);
         }
-        User user = userRepository.findById(userId)
+        User user = userRepository
+                .findById(userId)
                 .filter(u -> !u.isDeleted())
                 .orElseThrow(() -> new BusinessException(AuthErrorCode.INVALID_TOKEN));
         return issueTokens(user);
