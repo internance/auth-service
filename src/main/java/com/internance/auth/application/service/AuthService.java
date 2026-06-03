@@ -13,28 +13,45 @@ import com.internance.auth.infrastructure.security.JwtTokenProvider;
 import com.internance.common.exception.BusinessException;
 
 import io.jsonwebtoken.JwtException;
-import lombok.RequiredArgsConstructor;
 
 @Service
-@RequiredArgsConstructor
 public class AuthService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
+    /**
+     * Encoded once at startup so the "user not found" path performs the same
+     * bcrypt work as a real password check, closing the user-enumeration timing
+     * side channel. Computed via the injected encoder so it always matches the
+     * configured algorithm/strength.
+     */
+    private final String dummyPasswordHash;
+
+    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder,
+                       JwtTokenProvider jwtTokenProvider) {
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.jwtTokenProvider = jwtTokenProvider;
+        this.dummyPasswordHash = passwordEncoder.encode("invalid-password-placeholder");
+    }
 
     /**
      * Verifies credentials and issues an access/refresh token pair.
      *
      * @throws BusinessException {@link AuthErrorCode#INVALID_CREDENTIALS} if the
      *         username is unknown or the password does not match. The same error
-     *         is used for both to avoid revealing which usernames exist.
+     *         and the same amount of work are used for both, so neither the
+     *         response nor its timing reveals which usernames exist.
      */
     @Transactional(readOnly = true)
     public TokenResult login(String username, String rawPassword) {
-        User user = userRepository.findByUsername(username)
-                .filter(u -> passwordEncoder.matches(rawPassword, u.getPassword()))
-                .orElseThrow(() -> new BusinessException(AuthErrorCode.INVALID_CREDENTIALS));
+        User user = userRepository.findByUsername(username).orElse(null);
+        String encodedPassword = (user != null) ? user.getPassword() : dummyPasswordHash;
+        boolean matches = passwordEncoder.matches(rawPassword, encodedPassword);
+        if (user == null || !matches) {
+            throw new BusinessException(AuthErrorCode.INVALID_CREDENTIALS);
+        }
         return issueTokens(user);
     }
 
