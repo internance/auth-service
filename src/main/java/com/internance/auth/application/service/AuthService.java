@@ -69,14 +69,15 @@ public class AuthService {
     @Transactional(readOnly = true)
     public TokenResult refresh(String refreshToken) {
         JwtTokenProvider.RefreshToken parsed = parse(refreshToken);
-        if (!refreshTokenStore.isValid(parsed.jti(), parsed.userId())) {
+        // Atomically validate and consume the old token so concurrent refreshes
+        // of the same token can't both succeed.
+        if (!refreshTokenStore.consume(parsed.jti(), parsed.userId())) {
             throw new BusinessException(AuthErrorCode.INVALID_TOKEN);
         }
         User user = userRepository
                 .findById(parsed.userId())
                 .filter(u -> !u.isDeleted())
                 .orElseThrow(() -> new BusinessException(AuthErrorCode.INVALID_TOKEN));
-        refreshTokenStore.revoke(parsed.jti());
         return issueTokens(user);
     }
 

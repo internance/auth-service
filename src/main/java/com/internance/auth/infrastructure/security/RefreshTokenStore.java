@@ -25,9 +25,17 @@ public class RefreshTokenStore {
         redisTemplate.opsForValue().set(key(jti), userId.toString(), ttl);
     }
 
-    /** Whether this jti is still a valid refresh token for the given user. */
-    public boolean isValid(String jti, UUID userId) {
-        String stored = redisTemplate.opsForValue().get(key(jti));
+    /**
+     * Atomically validates and consumes a refresh token (jti): it is deleted and
+     * {@code true} is returned only if it existed for the given user. Backed by a
+     * single Redis {@code GETDEL}, so under concurrent refreshes of the same
+     * token exactly one caller wins — preventing double-refresh races.
+     *
+     * @return {@code true} if the token was valid and is now consumed; {@code false}
+     *         if it was missing, already consumed, or belonged to another user
+     */
+    public boolean consume(String jti, UUID userId) {
+        String stored = redisTemplate.opsForValue().getAndDelete(key(jti));
         return stored != null && stored.equals(userId.toString());
     }
 
