@@ -78,16 +78,13 @@ tasks.named('test') {
 }
 
 openapi3 {
-	server = 'http://localhost:8100'
+	server = project.findProperty('openapi.server.url') ?: 'http://localhost:8100'
 	title = 'Auth Service API'
 	description = 'Authentication and user APIs for the auth-service.'
 	version = project.version
 	format = 'yaml'
 }
 
-// Package the generated spec into the boot jar as a static resource so Swagger
-// UI can load it at /docs/openapi3.yaml (BOOT-INF/classes is the runtime
-// classpath root, so /static there maps to classpath:/static).
 tasks.named('bootJar') {
 	dependsOn 'openapi3'
 	from(layout.buildDirectory.dir('api-spec')) {
