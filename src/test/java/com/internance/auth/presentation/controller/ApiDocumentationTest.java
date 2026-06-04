@@ -16,6 +16,7 @@ import com.internance.auth.presentation.dto.LoginRequest;
 import com.internance.auth.presentation.dto.RefreshRequest;
 import com.internance.auth.presentation.dto.SignUpRequest;
 import com.internance.common.apispec.ApiDocSupport;
+import java.util.Set;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -75,8 +76,12 @@ class ApiDocumentationTest {
     }
 
     @AfterEach
-    void flushRedis() {
-        redisTemplate.getConnectionFactory().getConnection().serverCommands().flushDb();
+    void cleanupRedis() {
+        Set<String> keys = redisTemplate.keys("*");
+
+        if (keys != null && !keys.isEmpty()) {
+            redisTemplate.delete(keys);
+        }
     }
 
     // --- Sign up -----------------------------------------------------------
