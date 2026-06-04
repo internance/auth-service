@@ -29,6 +29,8 @@ public class SecurityConfig {
         http.csrf(csrf -> csrf.disable()).authorizeHttpRequests(auth -> auth.requestMatchers(
                         "/actuator/health", "/actuator/health/**", "/actuator/prometheus")
                 .permitAll()
+                .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**", "/docs/**")
+                .permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/v1/users/signup")
                 .permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/v1/auth/login", "/api/v1/auth/refresh", "/api/v1/auth/logout")
