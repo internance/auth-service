@@ -40,40 +40,54 @@ public class JwtTokenProvider {
     }
 
     public String createAccessToken(UUID userId, String role) {
-        return build(userId, accessTokenValidity, Map.of(TYPE_CLAIM, ACCESS, ROLE_CLAIM, role));
+        return build(userId, null, accessTokenValidity, Map.of(TYPE_CLAIM, ACCESS, ROLE_CLAIM, role));
     }
 
-    public String createRefreshToken(UUID userId) {
-        return build(userId, refreshTokenValidity, Map.of(TYPE_CLAIM, REFRESH));
+    /**
+     * Creates a refresh token carrying {@code jti} as its id, so the server-side
+     * store can track and revoke it.
+     */
+    public String createRefreshToken(UUID userId, String jti) {
+        return build(userId, jti, refreshTokenValidity, Map.of(TYPE_CLAIM, REFRESH));
     }
 
     public long getAccessTokenValiditySeconds() {
         return accessTokenValidity.toSeconds();
     }
 
+    public Duration getRefreshTokenValidity() {
+        return refreshTokenValidity;
+    }
+
     /**
-     * Verifies a refresh token and returns its subject (user id).
+     * Verifies a refresh token and returns its subject (user id) and id (jti).
      *
      * @throws JwtException if the token is malformed, expired, tampered with, or
      *                      is not a refresh token
      */
-    public UUID parseRefreshSubject(String token) {
+    public RefreshToken parseRefresh(String token) {
         Claims claims =
                 Jwts.parser().verifyWith(key).build().parseSignedClaims(token).getPayload();
         if (!REFRESH.equals(claims.get(TYPE_CLAIM, String.class))) {
             throw new JwtException("Not a refresh token");
         }
-        return UUID.fromString(claims.getSubject());
+        return new RefreshToken(UUID.fromString(claims.getSubject()), claims.getId());
     }
 
-    private String build(UUID userId, Duration ttl, Map<String, ?> claims) {
+    private String build(UUID userId, String jti, Duration ttl, Map<String, ?> claims) {
         Instant now = Instant.now();
-        return Jwts.builder()
+        var builder = Jwts.builder()
                 .subject(userId.toString())
                 .claims(claims)
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(now.plus(ttl)))
-                .signWith(key)
-                .compact();
+                .signWith(key);
+        if (jti != null) {
+            builder.id(jti);
+        }
+        return builder.compact();
     }
+
+    /** Verified refresh-token identity: the subject (user id) and id (jti). */
+    public record RefreshToken(UUID userId, String jti) {}
 }

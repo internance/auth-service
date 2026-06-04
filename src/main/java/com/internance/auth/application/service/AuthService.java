@@ -4,9 +4,10 @@ import com.internance.auth.domain.exception.AuthErrorCode;
 import com.internance.auth.domain.model.User;
 import com.internance.auth.infrastructure.persistence.UserRepository;
 import com.internance.auth.infrastructure.security.JwtTokenProvider;
+import com.internance.auth.infrastructure.security.RefreshTokenStore;
 import com.internance.common.exception.BusinessException;
+import com.internance.common.utils.IdGenerator;
 import io.jsonwebtoken.JwtException;
-import java.util.UUID;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,6 +18,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
+    private final RefreshTokenStore refreshTokenStore;
     /**
      * Encoded once at startup so the "user not found" path performs the same
      * bcrypt work as a real password check, closing the user-enumeration timing
@@ -26,10 +28,14 @@ public class AuthService {
     private final String dummyPasswordHash;
 
     public AuthService(
-            UserRepository userRepository, PasswordEncoder passwordEncoder, JwtTokenProvider jwtTokenProvider) {
+            UserRepository userRepository,
+            PasswordEncoder passwordEncoder,
+            JwtTokenProvider jwtTokenProvider,
+            RefreshTokenStore refreshTokenStore) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtTokenProvider = jwtTokenProvider;
+        this.refreshTokenStore = refreshTokenStore;
         this.dummyPasswordHash = passwordEncoder.encode("invalid-password-placeholder");
     }
 
@@ -53,29 +59,53 @@ public class AuthService {
     }
 
     /**
-     * Validates a refresh token and issues a new token pair (refresh rotation).
+     * Validates a refresh token and issues a new token pair, rotating the
+     * refresh token: the presented one is revoked and a fresh one is stored.
      *
      * @throws BusinessException {@link AuthErrorCode#INVALID_TOKEN} if the token
-     *         is invalid/expired or the user no longer exists.
+     *         is invalid/expired, has already been rotated or revoked (not in the
+     *         store), or the user no longer exists.
      */
     @Transactional(readOnly = true)
     public TokenResult refresh(String refreshToken) {
-        UUID userId;
-        try {
-            userId = jwtTokenProvider.parseRefreshSubject(refreshToken);
-        } catch (JwtException | IllegalArgumentException e) {
-            throw new BusinessException(AuthErrorCode.INVALID_TOKEN, e);
+        JwtTokenProvider.RefreshToken parsed = parse(refreshToken);
+        // Atomically validate and consume the old token so concurrent refreshes
+        // of the same token can't both succeed.
+        if (!refreshTokenStore.consume(parsed.jti(), parsed.userId())) {
+            throw new BusinessException(AuthErrorCode.INVALID_TOKEN);
         }
         User user = userRepository
-                .findById(userId)
+                .findById(parsed.userId())
                 .filter(u -> !u.isDeleted())
                 .orElseThrow(() -> new BusinessException(AuthErrorCode.INVALID_TOKEN));
         return issueTokens(user);
     }
 
+    /**
+     * Revokes the session behind the given refresh token. Idempotent for a valid
+     * token whose session is already gone.
+     *
+     * @throws BusinessException {@link AuthErrorCode#INVALID_TOKEN} if the token
+     *         cannot be parsed as a refresh token.
+     */
+    public void logout(String refreshToken) {
+        JwtTokenProvider.RefreshToken parsed = parse(refreshToken);
+        refreshTokenStore.revoke(parsed.jti());
+    }
+
+    private JwtTokenProvider.RefreshToken parse(String refreshToken) {
+        try {
+            return jwtTokenProvider.parseRefresh(refreshToken);
+        } catch (JwtException | IllegalArgumentException e) {
+            throw new BusinessException(AuthErrorCode.INVALID_TOKEN, e);
+        }
+    }
+
     private TokenResult issueTokens(User user) {
+        String jti = IdGenerator.generateString();
         String accessToken = jwtTokenProvider.createAccessToken(user.getId(), user.getRole());
-        String refreshToken = jwtTokenProvider.createRefreshToken(user.getId());
+        String refreshToken = jwtTokenProvider.createRefreshToken(user.getId(), jti);
+        refreshTokenStore.store(jti, user.getId(), jwtTokenProvider.getRefreshTokenValidity());
         return new TokenResult(accessToken, refreshToken, jwtTokenProvider.getAccessTokenValiditySeconds());
     }
 }
