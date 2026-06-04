@@ -17,7 +17,6 @@ import com.internance.auth.presentation.dto.RefreshRequest;
 import com.internance.auth.presentation.dto.SignUpRequest;
 import com.internance.common.apispec.ApiDocSupport;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs;
@@ -50,6 +49,11 @@ class ApiDocumentationTest {
     private static final String SIGNUP_TAG = "1. Sign up";
     private static final String AUTH_TAG = "2. Authentication";
 
+    // Single identity used across sign-up, login, refresh and logout so the docs
+    // tell one coherent story (register docuser -> log in as docuser).
+    private static final String USERNAME = "docuser";
+    private static final String PASSWORD = "password123";
+
     @Autowired
     private MockMvc mockMvc;
 
@@ -65,9 +69,9 @@ class ApiDocumentationTest {
     @Autowired
     private StringRedisTemplate redisTemplate;
 
-    @BeforeEach
-    void seedUser() {
-        userRepository.saveAndFlush(User.create("docuser", passwordEncoder.encode("password123"), "USER"));
+    /** Seeds the existing user that login/refresh/logout and the duplicate-name case rely on. */
+    private void seedUser() {
+        userRepository.saveAndFlush(User.create(USERNAME, passwordEncoder.encode(PASSWORD), "USER"));
     }
 
     @AfterEach
@@ -81,7 +85,7 @@ class ApiDocumentationTest {
     void signUp() throws Exception {
         mockMvc.perform(post("/api/v1/users/signup")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(new SignUpRequest("newuser", "password123"))))
+                        .content(objectMapper.writeValueAsString(new SignUpRequest(USERNAME, PASSWORD))))
                 .andExpect(status().isCreated())
                 .andDo(document(
                         "users-signup",
@@ -100,9 +104,10 @@ class ApiDocumentationTest {
 
     @Test
     void signUp_duplicateUsername_conflict() throws Exception {
+        seedUser();
         mockMvc.perform(post("/api/v1/users/signup")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(new SignUpRequest("docuser", "password123"))))
+                        .content(objectMapper.writeValueAsString(new SignUpRequest(USERNAME, PASSWORD))))
                 .andExpect(status().isConflict())
                 .andDo(document(
                         "users-signup-conflict",
@@ -140,9 +145,10 @@ class ApiDocumentationTest {
 
     @Test
     void login() throws Exception {
+        seedUser();
         mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(new LoginRequest("docuser", "password123"))))
+                        .content(objectMapper.writeValueAsString(new LoginRequest(USERNAME, PASSWORD))))
                 .andExpect(status().isOk())
                 .andDo(document(
                         "auth-login",
@@ -159,9 +165,10 @@ class ApiDocumentationTest {
 
     @Test
     void login_invalidCredentials_unauthorized() throws Exception {
+        seedUser();
         mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(new LoginRequest("docuser", "wrong-password"))))
+                        .content(objectMapper.writeValueAsString(new LoginRequest(USERNAME, "wrong-password"))))
                 .andExpect(status().isUnauthorized())
                 .andDo(document(
                         "auth-login-unauthorized",
@@ -180,6 +187,7 @@ class ApiDocumentationTest {
 
     @Test
     void refresh() throws Exception {
+        seedUser();
         String refreshToken = loginResponse().at("/data/refreshToken").asText();
 
         mockMvc.perform(post("/api/v1/auth/refresh")
@@ -222,6 +230,7 @@ class ApiDocumentationTest {
 
     @Test
     void logout() throws Exception {
+        seedUser();
         String refreshToken = loginResponse().at("/data/refreshToken").asText();
 
         mockMvc.perform(post("/api/v1/auth/logout")
@@ -301,7 +310,7 @@ class ApiDocumentationTest {
     private JsonNode loginResponse() throws Exception {
         String body = mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(new LoginRequest("docuser", "password123"))))
+                        .content(objectMapper.writeValueAsString(new LoginRequest(USERNAME, PASSWORD))))
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
