@@ -3,14 +3,3 @@ spring:
     name: auth-service
   config:
     import: "optional:configserver:${CONFIG_SERVER_URI:http://config-service:8888}"
-
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,prometheus
-
-# JWT signing: jwt.secret (>= 32 bytes for HS256) must be provided via the
-# config server or the JWT_SECRET environment variable; it is intentionally
-# not committed here. access/refresh token validity default to 30m/14d.
-
