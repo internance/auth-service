@@ -44,9 +44,9 @@ dependencies {
 	implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
 	implementation 'io.jsonwebtoken:jjwt-api:0.13.0'
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.6'
-	implementation 'com.github.internance:common-lib:1.0.4'
+	implementation 'com.github.internance:common-lib:1.0.5'
 	implementation 'com.github.f4b6a3:uuid-creator:5.3.3'
-	
+
 	compileOnly 'org.projectlombok:lombok'
 	runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
 	runtimeOnly 'org.flywaydb:flyway-database-postgresql'
