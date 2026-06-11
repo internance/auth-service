@@ -55,8 +55,10 @@ class AuthControllerIntegrationTest {
 
     @AfterEach
     void flushRedis() {
-        // Redis is not rolled back with the test transaction; clear stored tokens.
-        redisTemplate.getConnectionFactory().getConnection().serverCommands().flushDb();
+        redisTemplate.execute((org.springframework.data.redis.core.RedisCallback<Void>) connection -> {
+            connection.serverCommands().flushDb();
+            return null;
+        });
     }
 
     @Test
