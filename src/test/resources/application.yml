@@ -1,4 +1,6 @@
 spring:
+  application:
+    name: auth-service
   cloud:
     config:
       enabled: false
@@ -7,6 +9,13 @@ spring:
       # Flyway owns the schema; Hibernate only validates that the entities
       # match the migrated tables.
       ddl-auto: validate
+  kafka:
+    listener:
+      auto-startup: false
+
+config:
+  events:
+    topic: test-config-events
 
 eureka:
   client:
@@ -17,3 +26,5 @@ eureka:
 jwt:
   # Test-only HS256 secret (>= 32 bytes); never used outside tests.
   secret: test-secret-test-secret-test-secret-0123456789
+  access-token-validity: 1m
+  refresh-token-validity: 1h
