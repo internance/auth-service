@@ -40,6 +40,10 @@ public class ConfigChangeListener {
 
     @KafkaListener(topics = "${config.events.topic}")
     public void onConfigChanged(EventEnvelope<ConfigChangedEvent> envelope) {
+        if (envelope == null) {
+            log.warn("Received null envelope from Kafka; skipping");
+            return;
+        }
         ConfigChangedEvent event = envelope.payload();
         if (event == null || !applicationName.equals(event.application())) {
             log.debug(
@@ -55,7 +59,19 @@ public class ConfigChangeListener {
                 event.label(),
                 event.commitId(),
                 event.paths());
-        Set<String> changedKeys = contextRefresher.refresh();
+        Set<String> changedKeys;
+        try {
+            changedKeys = contextRefresher.refresh();
+        } catch (Exception e) {
+            log.error(
+                    "Failed to refresh context for {} (eventId={}, commit={}): {}",
+                    event.application(),
+                    envelope.eventId(),
+                    event.commitId(),
+                    e.getMessage(),
+                    e);
+            throw e;
+        }
         log.info(
                 "Context refresh complete for {}: {} propert{} changed",
                 applicationName,
